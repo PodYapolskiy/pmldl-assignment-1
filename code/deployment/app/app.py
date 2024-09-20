@@ -1,13 +1,14 @@
-import pandas as pd
+import requests
 import numpy as np
+import pandas as pd
 from PIL import Image
-import skimage.measure
+
 import streamlit as st
-from streamlit_drawable_canvas import st_canvas
+from streamlit_drawable_canvas import st_canvas, CanvasResult
 
-from utils import softmax, markdown_progress
+from utils import markdown_progress
 
-# ...
+# main size of image
 mnist_size = 28
 
 # separate on canvas and probabilities columns, set wide layout
@@ -16,11 +17,13 @@ col1, col2 = st.columns(2)
 
 # canvas component
 with col1:
-    canvas_result = st_canvas(
-        fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+    canvas_result: CanvasResult = st_canvas(
+        # fill_color="#eee",  # "rgba(255, 165, 0, 0.3)" fixed fill color with some opacity
         stroke_width=st.sidebar.slider("Stroke width: ", 10, 50, 25, 5),
-        stroke_color=st.sidebar.color_picker("Stroke color hex: "),
-        background_color=st.sidebar.color_picker("Background color hex: ", "#eee"),
+        stroke_color=st.sidebar.color_picker("Stroke color hex: ", "#fff"),
+        background_color=st.sidebar.color_picker(
+            "Background color hex: ", "#000"
+        ),  # "#eee"
         # background_image=Image.open(bg_image) if bg_image else None,
         # bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
         update_streamlit=st.sidebar.checkbox("Update in realtime", True),
@@ -33,8 +36,8 @@ with col1:
         key="canvas",
     )
 
-    if canvas_result.image_data is not None:
-        image: np.ndarray = canvas_result.image_data
+    image: np.ndarray | None = canvas_result.image_data
+    if image is not None and image[:, :, 0:3].any():  # exclude alpha channel with 255
         h, w, _ = image.shape
         assert h == w
         block_size = w // mnist_size
@@ -51,29 +54,21 @@ with col1:
 
         # get back image as numpy of shape (28, 28)
         image = np.array(im)
-        print(image.shape)
 
-        # new_image = image.resize(image_height, image_height)
-        if image.shape == (mnist_size, mnist_size):
-            print(image.shape)
+        # get results from API
+        results = requests.post("http://localhost:8000/predict", data=image.tobytes())
+        response = results.json()
+
+        probs = response.get("probs")
+        pred = response.get("pred")
+    else:
+        # draw equil probs on empty image
+        probs = [0.1 for _ in range(10)]
 
 
 # prediction
 with col2:
-    probs = softmax(np.random.randn(10))
     df = pd.DataFrame(data={"class": range(10), "prob": probs})
     df["prob"] = df["prob"].round(2)
     df["confidence"] = df["prob"].map(markdown_progress)
     st.markdown(body="""""" + df.to_markdown(index=False), unsafe_allow_html=True)
-
-
-# Do something interesting with the image data and paths
-# if canvas_result.json_data is not None:
-#     print(canvas_result.image_data.shape)
-# objects = pd.json_normalize(
-#     canvas_result.json_data["objects"]
-# )  # need to convert obj to str because PyArrow
-# for col in objects.select_dtypes(include=["object"]).columns:
-#     objects[col] = objects[col].astype("str")
-# st.dataframe(objects)
-# st.dataframe(canvas_result.image_data)
