@@ -1,0 +1,8 @@
+*
+
+!code
+!models
+
+!poetry.lock
+!pyproject.toml
+!requirements.txt

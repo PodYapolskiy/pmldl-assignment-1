@@ -1,0 +1,26 @@
+services:
+  api:
+    container_name: api
+    build: 
+      context: .
+      dockerfile: ./code/deployment/api/Dockerfile
+    ports:
+      - 8000:8000
+    networks:
+      - deploy_network
+
+  app:
+    container_name: app
+    build: 
+      context: .
+      dockerfile: ./code/deployment/app/Dockerfile
+    depends_on:
+      - api
+    ports: 
+        - 8501:8501
+    networks:
+      - deploy_network
+
+networks:
+  deploy_network:
+    driver: bridge

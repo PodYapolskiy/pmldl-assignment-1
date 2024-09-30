@@ -56,7 +56,7 @@ with col1:
         image = np.array(im)
 
         # get results from API
-        results = requests.post("http://localhost:8000/predict", data=image.tobytes())
+        results = requests.post("http://api:8000/predict", data=image.tobytes())
         response = results.json()
 
         probs = response.get("probs")
