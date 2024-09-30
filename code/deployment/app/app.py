@@ -19,7 +19,7 @@ col1, col2 = st.columns(2)
 with col1:
     canvas_result: CanvasResult = st_canvas(
         # fill_color="#eee",  # "rgba(255, 165, 0, 0.3)" fixed fill color with some opacity
-        stroke_width=st.sidebar.slider("Stroke width: ", 10, 50, 25, 5),
+        stroke_width=st.sidebar.slider("Stroke width: ", 10, 50, 30, 5),
         stroke_color=st.sidebar.color_picker("Stroke color hex: ", "#fff"),
         background_color=st.sidebar.color_picker(
             "Background color hex: ", "#000"
